@@ -9,7 +9,7 @@
 
 int get_cmd(char *payload, char *output, int size) {
 
-    int i,j,len;
+    int i,j, len;
     int start = -1;
     int end = -1;
 
@@ -53,14 +53,35 @@ int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, c
     source.sin_addr.s_addr = ip_head->saddr;
     dest.sin_addr.s_addr = ip_head->daddr;
 
+    printf("\n==========================================\n");
+    printf("Src  : %s\n",inet_ntoa(source.sin_addr));
+    printf("Dest : %s\n",inet_ntoa(dest.sin_addr));
+
+    printf("Len  : %d  Bytes\n",ntohs(ip_head->tot_len));
+    printf("Type : %d",(unsigned int)(icmp_head->type));
+
     if((unsigned int)(icmp_head->type) == ICMP_ECHOREPLY) {
+        printf(" (ICMP Echo Reply)\n");
         strncpy(ip_dst, inet_ntoa(source.sin_addr), strlen(inet_ntoa(source.sin_addr)));    // return src ip
         strncpy(ip_src, inet_ntoa(dest.sin_addr), strlen(inet_ntoa(dest.sin_addr)));        // return dst ip   
-    } else if((unsigned int)(icmp_head->type) == ICMP_ECHO) {
+    }
+    else if((unsigned int)(icmp_head->type) == ICMP_ECHO) {
+        printf(" (ICMP Echo Request)\n");
         strncpy(ip_src, inet_ntoa(source.sin_addr), strlen(inet_ntoa(source.sin_addr)));    // return src ip
         strncpy(ip_dst, inet_ntoa(dest.sin_addr), strlen(inet_ntoa(dest.sin_addr)));        // return dst ip  
-    } else
-        return 1;
+    }
+    else
+        return 2;
+
+    printf("\n");
+    printf("Payload: \n");  
+
+    // display
+    for(i=0 ; i < data_size ; i++) 
+        if (data[i]>=32 && data[i]<=128)
+            printf("%c",(unsigned char)data[i]);
+        else
+            printf(".");
 
     // return payload
     for(i=0 ; i < data_size ; i++) 
@@ -72,7 +93,11 @@ int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, c
             msg[i] = (unsigned char)data[i];
         else
             msg[i] = '.';
-    msg[i] = 0x00; // null terminator
+
+    msg[i] = 0x00;
+
+    printf("\n==========================================\n");
+    fflush(stdout);
 
     return 0;
 }
@@ -92,27 +117,30 @@ int main()
     char *cmd = malloc(64);
 
     s = socket(AF_INET , SOCK_RAW , IPPROTO_ICMP);                          // raw socket, ICMP only (TCP, UDP, RAW)
-    if(s < 0) return 1; 
+    if(s < 0) { printf("Cannot create socket\n"); return 1; }
     s_size = sizeof s_addr;
 
     while(1)
     {
+
         recv_size = recvfrom(s , buffer , 128 , 0 , &s_addr , &s_size);     // receiving
-        if(recv_size <0 ) return 2;
+        if(recv_size <0 ) { printf("Failed to get packet\n"); return 1; }
 
         ip_head = (struct iphdr*)buffer;
         if (ip_head->protocol == 1) {
             st = process_icmp(buffer , recv_size, ip_src, ip_dst, msg);
 
             if ((st == 0 ) && get_cmd(msg, cmd, strlen(msg)) == 0) {
-                printf("Package found!\n");
+                printf("Package captured!\n");
                 printf("From %s, to %s\n", ip_src, ip_dst);
                 printf("Command: %s\n", cmd);
             }
-        } else
+        }
+        else
             continue;
 
     }
+
     close(s);
     return 0;
 }
