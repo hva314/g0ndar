@@ -20,6 +20,37 @@ void banner() {
     printf("                                          \n");
 }
 
+void split_string(char *m, char **s1, char **s2) {
+
+    int l = strlen(m);
+    *s1 = (char *) malloc(64);
+    *s2 = (char *) malloc(64);
+
+    if (strstr(m," ") == NULL) {
+        strncpy(*s1, m, l);
+        free(*s2); *s2 = NULL;
+        return;
+    }
+
+    for (int i=0; i<l; i++)
+        if (m[i] == ' ') {
+            (*s1)[i] = 0x00;
+            break;
+        } else
+            (*s1)[i] = m[i];
+
+    strncpy(*s2,&strstr(m, " ")[1],strlen(&strstr(m, " ")[1]));
+
+    if (strlen(*s1) < 1) {
+        free(*s1); *s1 = NULL;
+        free(*s2); *s2 = NULL;
+    } else if (strlen(*s2) < 1) {
+        free(*s2); *s2 = NULL;
+    }
+
+    return;
+}
+
 int get_ip(char *ip, char *ifname) {
     struct ifaddrs *addrs, *iface;
     getifaddrs(&addrs);
