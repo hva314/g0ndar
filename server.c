@@ -86,6 +86,7 @@ int main(int argc , char *argv[])
     char dest[64];
     char iface[64];
     char cmd[512];
+    int i;
 
     set_up(source, dest, iface, cmd);
 
@@ -97,6 +98,10 @@ int main(int argc , char *argv[])
         if (strlen(cmd) <= 2)
             continue;
         cmd[strlen(cmd)-1] = 0xff;
+
+        // swap nibbles
+        for (i=0; i<strlen(cmd); i++)
+            cmd[i] = ((unsigned char)cmd[i] & 0x0F)<<4 | (unsigned char)(cmd[i] & 0xF0)>>4;
 
         if (ping(cmd, source, dest, iface) == 0)
             printf(PASS "Package sent!\n");
