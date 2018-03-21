@@ -13,7 +13,6 @@
 #define IP4_HDRLEN 20                   // IPv4 header length
 #define ICMP_HDRLEN 8                   // ICMP header length for echo request, excludes data
 
-// Function prototypes
 uint16_t checksum (uint16_t *, int);
 char *allocate_strmem (int);
 uint8_t *allocate_ustrmem (int);

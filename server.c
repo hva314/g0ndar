@@ -30,8 +30,8 @@ int get_ip(char *ip, char *ifname) {
         if (iface->ifa_addr && iface->ifa_addr->sa_family == AF_INET) {
             struct sockaddr_in *pAddr = (struct sockaddr_in *)iface->ifa_addr;
 
-            // exclude virtual NIC and loopback
-            if (strstr(iface->ifa_name, "l") == NULL && strstr(iface->ifa_name, "v") == NULL) {
+            // exclude virtual NIC, loopback, and tunneling
+            if (iface->ifa_name[0] != 'v' && iface->ifa_name[0] != 'l' && iface->ifa_name[0] != 't') {
                 strcpy(ip, inet_ntoa(pAddr->sin_addr));
                 strcpy(ifname, iface->ifa_name);
                 printf(PASS);
@@ -80,8 +80,7 @@ void set_up(char *source, char *dest, char *iface, char *cmd)
 }
 
 int main(int argc , char *argv[])
-{
-
+{ 
     banner();
     char source[64];
     char dest[64];
@@ -104,5 +103,4 @@ int main(int argc , char *argv[])
         else   
             printf(FAIL "Failed to sent package!\n");
     }
-
-}   
+}
