@@ -175,7 +175,7 @@ int process_icmp(unsigned char* buffer , int size, char *ip_src, char *ip_dst, c
     if ((unsigned int)(icmp_head->type) == ICMP_ECHOREPLY) {
         printf(" (ICMP Echo Reply)\n");
         strncpy(ip_dst, inet_ntoa(source.sin_addr), 16);    // return src ip
-        strncpy(ip_src, inet_ntoa(dest.sin_addr), 16);        // return dst ip   
+        strncpy(ip_src, inet_ntoa(dest.sin_addr), 16 );        // return dst ip   
     } else if((unsigned int)(icmp_head->type) == ICMP_ECHO) {
         printf(" (ICMP Echo Request)\n");
         strncpy(ip_src, inet_ntoa(source.sin_addr), 16);    // return src ip
